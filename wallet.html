@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPACE GLASS - Wallet</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#c8f7c5;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+#wallet {
+  width:400px;
+  height:300px;
+  background:#c8f7c5;
+  position:relative;
+}
+
+#back {
+  position:absolute;
+  top:5px;
+  left:5px;
+  font-size:20px;
+  cursor:pointer;
+}
+
+#balance {
+  background:navy;
+  color:white;
+  padding:10px;
+  text-align:center;
+  font-weight:bold;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  margin:15px;
+}
+
+.amount {
+  background:#001f3f;
+  color:white;
+  padding:10px;
+  text-align:center;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+#livesSection {
+  margin:15px;
+}
+
+#livesLabel {
+  font-weight:bold;
+}
+
+#heart {
+  font-size:48px;
+  text-align:center;
+  cursor:pointer;
+}
+
+#popup {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:#000;
+  color:white;
+  padding:15px;
+  border-radius:6px;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="wallet">
+  <div id="back" onclick="window.history.back()">↩️</div>
+
+  <div id="balance">BALANCE: R0.00</div>
+
+  <div class="grid">
+    <div class="amount" onclick="pay(5)">R5</div>
+    <div class="amount" onclick="pay(10)">R10</div>
+    <div class="amount" onclick="pay(15)">R15</div>
+    <div class="amount" onclick="pay(20)">R20</div>
+  </div>
+
+  <div id="livesSection">
+    <div id="livesLabel">LIVES ♥ <span id="livesCount">0</span></div>
+    <div id="heart">♥</div>
+  </div>
+</div>
+
+<div id="popup"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqJTLjxhZBCsvjrTH_cG0fkXlElG6BqTg",
+  authDomain: "tose-ccf8f.firebaseapp.com",
+  databaseURL: "https://tose-ccf8f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tose-ccf8f",
+  storageBucket: "tose-ccf8f.firebasestorage.app",
+  messagingSenderId: "475447495901",
+  appId: "1:475447495901:web:9189276a162a3680afdf34"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const email = localStorage.getItem('currentUserEmail');
+if(!email){ alert("No session"); window.location.href="index.html"; }
+
+let userKey = null;
+let balance = 0;
+let lives = 0;
+
+/* LOAD USER WALLET */
+async function loadWallet(){
+  const snap = await get(ref(db,'users'));
+  const users = snap.val();
+  for(const key in users){
+    if(users[key].email === email){
+      userKey = key;
+      balance = users[key].balance || 0;
+      lives = users[key].lives || 0;
+      updateUI();
+      break;
+    }
+  }
+}
+
+function updateUI(){
+  document.getElementById('balance').innerText = `BALANCE: R${balance.toFixed(2)}`;
+  document.getElementById('livesCount').innerText = lives + " ♥";
+}
+
+loadWallet();
+
+/* PAYFAST LINKS */
+function pay(amount){
+  let url = "";
+  if(amount === 5) url = "https://payf.st/pviof";
+  if(amount === 10) url = "https://payf.st/7d4zb";
+  if(amount === 15) url = "https://payf.st/7yw30";
+  if(amount === 20) url = "https://payf.st/2564l";
+  window.location.href = url;
+}
+
+/* BUY LIVES */
+document.getElementById('heart').addEventListener('click', async () => {
+  if(balance < 0.5) return show("INSUFFICIENT BALANCE");
+  if(lives >= 5) return show("MAX 5 LIVES");
+
+  balance -= 0.5;
+  lives += 1;
+
+  await update(ref(db,'users/' + userKey), { balance, lives });
+  updateUI();
+});
+
+/* POPUP */
+function show(msg){
+  const p = document.getElementById('popup');
+  p.innerText = msg;
+  p.style.display='block';
+  setTimeout(()=>p.style.display='none',1500);
+}
+</script>
+
+</body>
+</html>
