@@ -59,7 +59,12 @@ const db = getDatabase(app);
 
 // Get current user email from localStorage (set during login)
 const currentUserEmail = localStorage.getItem('currentUserEmail');
-if(!currentUserEmail) { alert('No user found, redirecting to login'); window.location.href='index.html'; }
+if(!email){
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 300);
+}
+
 
 // Load user details
 async function loadProfile() {
