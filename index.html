@@ -65,7 +65,8 @@ loginBtn.addEventListener('click', async () => {
     }
 
     if (loggedIn) {
-      window.location.href = "main-menu.html";
+  localStorage.setItem('currentUserEmail', email);
+  window.location.href = "main-menu.html";
     } else {
       alert('Incorrect email or password / Sign up first');
     }
