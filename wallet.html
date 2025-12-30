@@ -90,10 +90,10 @@ body {
   <div id="balance">BALANCE: R0.00</div>
 
   <div class="grid">
-    <div class="amount" onclick="pay(5)">R5</div>
-    <div class="amount" onclick="pay(10)">R10</div>
-    <div class="amount" onclick="pay(15)">R15</div>
-    <div class="amount" onclick="pay(20)">R20</div>
+    <div class="amount" data-amount="5">R5</div>
+<div class="amount" data-amount="10">R10</div>
+<div class="amount" data-amount="15">R15</div>
+<div class="amount" data-amount="20">R20</div>
   </div>
 
   <div id="livesSection">
@@ -156,14 +156,19 @@ function updateUI(){
 loadWallet();
 
 /* PAYFAST LINKS */
-function pay(amount){
-  let url = "";
-  if(amount === 5) url = "https://payf.st/pviof";
-  if(amount === 10) url = "https://payf.st/7d4zb";
-  if(amount === 15) url = "https://payf.st/7yw30";
-  if(amount === 20) url = "https://payf.st/2564l";
-  window.location.href = url;
-}
+document.querySelectorAll('.amount').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const amount = Number(btn.dataset.amount);
+
+    let url = "";
+    if (amount === 5) url = "https://payf.st/pviof";
+    if (amount === 10) url = "https://payf.st/7d4zb";
+    if (amount === 15) url = "https://payf.st/7yw30";
+    if (amount === 20) url = "https://payf.st/2564l";
+
+    window.location.href = url;
+  });
+});
 
 /* BUY LIVES */
 document.getElementById('heart').addEventListener('click', async () => {
