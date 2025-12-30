@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPACE GLASS - Sign Up</title>
+<style>
+body { background-color: lightblue; font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+.container { width:400px; background: rgba(0,0,0,0.1); padding:20px; border-radius:8px; }
+h1 { color:white; font-size:14px; text-align:center; margin-bottom:10px; }
+input { width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border-radius:4px; border:none; }
+#submitBtn { width:100%; padding:10px; margin-top:10px; background-color:green; color:white; border:none; border-radius:4px; cursor:pointer; }
+#back { position:absolute; top:10px; left:10px; cursor:pointer; font-size:18px; }
+</style>
+</head>
+<body>
+<div id="back" onclick="window.location.href='index.html'">↩️</div>
+<div class="container">
+  <h1>PERSONAL DETAILS</h1>
+  <input id="name" placeholder="Name">
+  <input id="surname" placeholder="Surname">
+  <input id="idNumber" placeholder="ID Number">
+  <input id="email" placeholder="Email">
+  <input id="nationality" placeholder="Nationality">
+  <input id="cellNumber" placeholder="Cell Number">
+  <input id="homeAddress" placeholder="Home Address">
+  <input id="suburb" placeholder="Suburb">
+  <input id="city" placeholder="City">
+  <input id="zipCode" placeholder="Zip Code">
+  
+  <h1 style="margin-top:15px;">Security</h1>
+  <input id="password" type="password" placeholder="Password">
+  <small>Password must be ≥ 8 characters</small>
+  <input id="confirmPassword" type="password" placeholder="Confirm Password">
+  <small>Confirm Password must match</small>
+  
+  <h1 style="margin-top:15px;">BANK DETAILS</h1>
+  <input id="bankName" placeholder="Bank Name">
+  <input id="accountNumber" placeholder="Account Number">
+  
+  <button id="submitBtn">SUBMIT</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, set, get, child, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqJTLjxhZBCsvjrTH_cG0fkXlElG6BqTg",
+  authDomain: "tose-ccf8f.firebaseapp.com",
+  databaseURL: "https://tose-ccf8f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tose-ccf8f",
+  storageBucket: "tose-ccf8f.firebasestorage.app",
+  messagingSenderId: "475447495901",
+  appId: "1:475447495901:web:9189276a162a3680afdf34",
+  measurementId: "G-PWC5R6Q8JD"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const userData = {
+    name: document.getElementById('name').value.trim(),
+    surname: document.getElementById('surname').value.trim(),
+    idNumber: document.getElementById('idNumber').value.trim(),
+    email: document.getElementById('email').value.trim().toLowerCase(),
+    nationality: document.getElementById('nationality').value.trim(),
+    cellNumber: document.getElementById('cellNumber').value.trim(),
+    homeAddress: document.getElementById('homeAddress').value.trim(),
+    suburb: document.getElementById('suburb').value.trim(),
+    city: document.getElementById('city').value.trim(),
+    zipCode: document.getElementById('zipCode').value.trim(),
+    password: document.getElementById('password').value,
+    bankName: document.getElementById('bankName').value.trim(),
+    accountNumber: document.getElementById('accountNumber').value.trim()
+  };
+
+  // Validate all fields filled
+  for (let key in userData) {
+    if (!userData[key]) return alert('Fill all fields');
+  }
+
+  // Password validation
+  if (userData.password.length < 8) return alert('Password must be at least 8 characters');
+  if (userData.password !== document.getElementById('confirmPassword').value) return alert('Passwords do not match');
+
+  try {
+    const snapshot = await get(child(ref(db), 'users'));
+    const users = snapshot.val() || {};
+    
+    // Check for duplicate ID
+    for (let key in users) {
+      if (users[key].idNumber === userData.idNumber) {
+        return alert('ID Number already exists');
+      }
+    }
+
+    // Push new user
+    await push(ref(db, 'users'), userData);
+    alert('SUBMITTED');
+    
+    // Redirect to login
+    window.location.href = 'index.html';
+  } catch (err) {
+    alert(err.message);
+  }
+});
+</script>
+</body>
+    </html>
