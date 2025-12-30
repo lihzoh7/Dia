@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Payment Success</title>
+
+<style>
+body{
+  margin:0;
+  background:#c8f7c5;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  font-family:Arial, sans-serif;
+}
+
+#box{
+  background:#0a7d2c;
+  color:white;
+  padding:30px;
+  border-radius:8px;
+  font-size:20px;
+}
+</style>
+</head>
+
+<body>
+<div id="box">SUCCESS ✔</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqJTLjxhZBCsvjrTH_cG0fkXlElG6BqTg",
+  authDomain: "tose-ccf8f.firebaseapp.com",
+  databaseURL: "https://tose-ccf8f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tose-ccf8f",
+  storageBucket: "tose-ccf8f.firebasestorage.app",
+  messagingSenderId: "475447495901",
+  appId: "1:475447495901:web:9189276a162a3680afdf34"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const email = localStorage.getItem("currentUserEmail");
+
+/* PayFast sends ?amount=5 etc (you can also hard-map if needed) */
+const params = new URLSearchParams(window.location.search);
+const amount = Number(params.get("amount")) || 0;
+
+async function creditWallet(){
+  if(!email || amount <= 0) return;
+
+  const snap = await get(ref(db,'users'));
+  const users = snap.val();
+
+  for(const key in users){
+    if(users[key].email === email){
+      const newBalance = (users[key].balance || 0) + amount;
+      await update(ref(db,'users/'+key), { balance:newBalance });
+      break;
+    }
+  }
+
+  setTimeout(()=>{
+    window.location.href = "wallet.html";
+  },1500);
+}
+
+creditWallet();
+</script>
+</body>
+</html>
