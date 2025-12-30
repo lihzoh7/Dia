@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPACE GLASS - Messages</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#ffffff;
+}
+
+#back {
+  font-size:22px;
+  cursor:pointer;
+  padding:10px;
+}
+
+h1 {
+  text-align:center;
+  font-size:14px;
+  margin:5px 0 15px 0;
+}
+
+#messages {
+  max-width:600px;
+  margin:0 auto;
+}
+
+.message {
+  border-bottom:1px solid #ddd;
+  padding:10px;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+}
+
+.message.unread {
+  font-weight:bold;
+}
+
+.message.read {
+  font-weight:normal;
+  opacity:0.6;
+}
+
+.message-content {
+  flex:1;
+}
+
+.date {
+  font-size:10px;
+  color:#666;
+}
+
+.delete {
+  cursor:pointer;
+  margin-left:10px;
+}
+.details {
+  font-size:12px;
+  margin-top:5px;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="back" onclick="window.location.href='main-menu.html'">↩️</div>
+<h1>My Messages</h1>
+
+<div id="messages"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqJTLjxhZBCsvjrTH_cG0fkXlElG6BqTg",
+  authDomain: "tose-ccf8f.firebaseapp.com",
+  databaseURL: "https://tose-ccf8f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tose-ccf8f",
+  storageBucket: "tose-ccf8f.firebasestorage.app",
+  messagingSenderId: "475447495901",
+  appId: "1:475447495901:web:9189276a162a3680afdf34"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const email = localStorage.getItem('currentUserEmail');
+if(!email){
+  alert("No user session found");
+  window.location.href = "index.html";
+}
+
+const messagesDiv = document.getElementById('messages');
+
+/* LIVE LISTENER */
+onValue(ref(db, 'messages'), snapshot => {
+  messagesDiv.innerHTML = "";
+  const data = snapshot.val();
+  if(!data) return;
+
+  // Convert to array & sort latest first
+  const list = Object.entries(data)
+    .filter(([_, msg]) => msg.email === email)
+    .sort((a,b) => b[1].timestamp - a[1].timestamp);
+
+  list.forEach(([key, msg]) => {
+    const div = document.createElement('div');
+    div.className = `message ${msg.read ? 'read' : 'unread'}`;
+
+    div.innerHTML = `
+      <div class="message-content">
+        <div>${msg.title || "Notification"}</div>
+        <div class="date">${new Date(msg.timestamp).toLocaleString()}</div>
+        <div class="details">${msg.body}</div>
+      </div>
+      <div class="delete">🚮</div>
+    `;
+
+    // Expand & mark as read
+    div.addEventListener('click', e => {
+      if(e.target.classList.contains('delete')) return;
+      const details = div.querySelector('.details');
+      details.style.display = details.style.display === 'block' ? 'none' : 'block';
+      if(!msg.read){
+        update(ref(db, 'messages/' + key), { read:true });
+      }
+    });
+
+    // Delete message
+    div.querySelector('.delete').addEventListener('click', () => {
+      remove(ref(db, 'messages/' + key));
+    });
+
+    messagesDiv.appendChild(div);
+  });
+});
+</script>
+
+</body>
+</html>
