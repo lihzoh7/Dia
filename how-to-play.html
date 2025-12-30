@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPACE GLASS - How to Play</title>
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#0b0b2c;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+#container {
+  width:600px;
+  padding:20px;
+  background:rgba(0,0,50,0.8);
+  border-radius:10px;
+  text-align:center;
+}
+h1 {
+  font-size:24px;
+  margin-bottom:20px;
+}
+p {
+  font-size:16px;
+  line-height:1.5;
+  margin-bottom:15px;
+}
+#startBtn {
+  margin-top:20px;
+  padding:15px 40px;
+  background:red;
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+#back {
+  position:absolute;
+  top:10px;
+  left:10px;
+  font-size:20px;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="back" onclick="window.location.href='main-menu.html'">↩️ Back</div>
+  <h1>HOW TO PLAY</h1>
+  <p>Welcome to <b>SPACE GLASS</b>! Your goal is to reach the highest score possible by completing the challenges in the game.</p>
+  <p>You can earn points by completing each level successfully. The more points you score, the higher you climb on the leaderboard!</p>
+  <p>Before you start, make sure you have enough lives. Each life costs R0.50, and you can buy lives in your <b>Wallet</b>.</p>
+  <p>Top 3 players at the end of each game session win prizes. Check the <b>Prizes</b> tab for details.</p>
+  <p>Good luck and have fun!</p>
+  <button id="startBtn">START GAME</button>
+</div>
+
+<script>
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  // redirect to game page
+  window.location.href='SLIDING.html';
+});
+</script>
+
+</body>
+</html>
