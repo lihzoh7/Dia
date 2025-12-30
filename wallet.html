@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>SPACE GLASS - Wallet</title>
-
 <style>
 body {
   margin:0;
@@ -14,14 +13,13 @@ body {
   align-items:center;
   height:100vh;
 }
-
 #wallet {
   width:400px;
-  height:300px;
   background:#c8f7c5;
+  padding:20px;
+  border-radius:10px;
   position:relative;
 }
-
 #back {
   position:absolute;
   top:5px;
@@ -29,22 +27,20 @@ body {
   font-size:20px;
   cursor:pointer;
 }
-
 #balance {
   background:navy;
   color:white;
   padding:10px;
   text-align:center;
   font-weight:bold;
+  margin-bottom:15px;
 }
-
 .grid {
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:10px;
-  margin:15px;
+  margin-bottom:20px;
 }
-
 .amount {
   background:#001f3f;
   color:white;
@@ -53,21 +49,17 @@ body {
   border-radius:5px;
   cursor:pointer;
 }
-
 #livesSection {
-  margin:15px;
+  text-align:center;
 }
-
 #livesLabel {
   font-weight:bold;
+  margin-bottom:10px;
 }
-
 #heart {
   font-size:48px;
-  text-align:center;
   cursor:pointer;
 }
-
 #popup {
   position:absolute;
   top:50%;
@@ -78,6 +70,7 @@ body {
   padding:15px;
   border-radius:6px;
   display:none;
+  z-index:10;
 }
 </style>
 </head>
@@ -91,9 +84,9 @@ body {
 
   <div class="grid">
     <div class="amount" data-amount="5">R5</div>
-<div class="amount" data-amount="10">R10</div>
-<div class="amount" data-amount="15">R15</div>
-<div class="amount" data-amount="20">R20</div>
+    <div class="amount" data-amount="10">R10</div>
+    <div class="amount" data-amount="15">R15</div>
+    <div class="amount" data-amount="20">R20</div>
   </div>
 
   <div id="livesSection">
@@ -106,7 +99,7 @@ body {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, get, update, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBqJTLjxhZBCsvjrTH_cG0fkXlElG6BqTg",
@@ -123,11 +116,8 @@ const db = getDatabase(app);
 
 const email = localStorage.getItem('currentUserEmail');
 if(!email){
-  setTimeout(() => {
-    window.location.href = "index.html";
-  }, 300);
+  setTimeout(() => window.location.href="index.html", 300);
 }
-
 
 let userKey = null;
 let balance = 0;
@@ -140,9 +130,18 @@ async function loadWallet(){
   for(const key in users){
     if(users[key].email === email){
       userKey = key;
-      balance = users[key].balance || 0;
-      lives = users[key].lives || 0;
+      balance = users[key].wallet?.balance || 0;
+      lives = users[key].wallet?.lives || 0;
       updateUI();
+      // Listen for realtime balance changes
+      onValue(ref(db, `users/${userKey}/wallet/balance`), snap => {
+        balance = snap.val() || 0;
+        updateUI();
+      });
+      onValue(ref(db, `users/${userKey}/wallet/lives`), snap => {
+        lives = snap.val() || 0;
+        updateUI();
+      });
       break;
     }
   }
@@ -150,23 +149,20 @@ async function loadWallet(){
 
 function updateUI(){
   document.getElementById('balance').innerText = `BALANCE: R${balance.toFixed(2)}`;
-  document.getElementById('livesCount').innerText = lives + " ♥";
+  document.getElementById('livesCount').innerText = lives;
 }
 
 loadWallet();
 
-/* PAYFAST LINKS */
+/* PAYFAST REDIRECT */
 document.querySelectorAll('.amount').forEach(btn => {
   btn.addEventListener('click', () => {
     const amount = Number(btn.dataset.amount);
+    if(!userKey) return show("User not loaded");
 
-    let url = "";
-    if (amount === 5) url = "https://payf.st/pviof";
-    if (amount === 10) url = "https://payf.st/7d4zb";
-    if (amount === 15) url = "https://payf.st/7yw30";
-    if (amount === 20) url = "https://payf.st/2564l";
-
-    window.location.href = url;
+    // Redirect with merchant_reference for backend
+    const payfastUrl = `https://payf.st/${amount === 5 ? 'pviof' : amount === 10 ? '7d4zb' : amount === 15 ? '7yw30' : '2564l'}?merchant_reference=${userKey}&custom_str1=${encodeURIComponent(email)}`;
+    window.location.href = payfastUrl;
   });
 });
 
@@ -178,7 +174,7 @@ document.getElementById('heart').addEventListener('click', async () => {
   balance -= 0.5;
   lives += 1;
 
-  await update(ref(db,'users/' + userKey), { balance, lives });
+  await update(ref(db, `users/${userKey}/wallet`), { balance, lives });
   updateUI();
 });
 
