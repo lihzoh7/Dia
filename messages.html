@@ -93,9 +93,11 @@ const db = getDatabase(app);
 
 const email = localStorage.getItem('currentUserEmail');
 if(!email){
-  alert("No user session found");
-  window.location.href = "index.html";
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 300);
 }
+
 
 const messagesDiv = document.getElementById('messages');
 
