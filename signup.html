@@ -97,7 +97,8 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     // Push new user
     await push(ref(db, 'users'), userData);
     alert('SUBMITTED');
-    
+    localStorage.setItem('currentUserEmail', userData.email);
+
     // Redirect to login
     window.location.href = 'index.html';
   } catch (err) {
