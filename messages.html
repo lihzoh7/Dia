@@ -3,60 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <title>SPACE GLASS - Messages</title>
+
 <style>
-body {
+body{
   margin:0;
-  font-family: Arial, sans-serif;
-  background:purple;
+  font-family:Arial, sans-serif;
+  background:#6a0dad;
   color:white;
+  height:100vh;
   display:flex;
   justify-content:center;
+  align-items:center;
 }
-#container {
-  width:500px;
-  margin-top:20px;
-  padding:20px;
+#container{
+  width:420px;
+  height:520px;
+  background:#fff;
+  color:#000;
+  border-radius:10px;
+  overflow:hidden;
+  position:relative;
 }
-#back {
-  font-size:20px;
-  cursor:pointer;
-  margin-bottom:15px;
-}
-.message {
+#top{
+  background:#6a0dad;
+  color:white;
   padding:10px;
-  border-bottom:1px solid #444;
   display:flex;
-  justify-content:space-between;
-  cursor:pointer;
+  align-items:center;
 }
-.message.unread {
+#back{
+  cursor:pointer;
+  font-size:18px;
+  margin-right:10px;
+}
+#title{
   font-weight:bold;
 }
-.message.read {
-  font-weight:normal;
-  opacity:0.7;
+#list{
+  height:470px;
+  overflow-y:auto;
 }
-.message-content {
-  margin-top:5px;
-  display:none;
-  color:#fff;
-}
-.delete {
+.message{
+  padding:10px;
+  border-bottom:1px solid #ddd;
   cursor:pointer;
-  margin-left:10px;
+  position:relative;
+}
+.message.unread{
+  font-weight:bold;
+  background:#f4e8ff;
+}
+.message.read{
+  font-weight:normal;
+}
+.msg-time{
+  font-size:11px;
+  color:#666;
+}
+.delete{
+  position:absolute;
+  right:10px;
+  top:10px;
+  cursor:pointer;
+}
+.msg-body{
+  display:none;
+  margin-top:8px;
+  font-size:14px;
 }
 </style>
 </head>
+
 <body>
 
 <div id="container">
-  <div id="back" onclick="window.location.href='main-menu.html'">↩️ Back</div>
-  <div id="messagesList">Loading messages...</div>
+  <div id="top">
+    <div id="back" onclick="goBack()">↩️</div>
+    <div id="title">MESSAGES</div>
+  </div>
+  <div id="list"></div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBqJTLjxhZBCsvjrTH_cG0fkXlElG6BqTg",
@@ -71,74 +101,75 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const email = localStorage.getItem('currentUserEmail');
+const email = localStorage.getItem("currentUserEmail");
 if(!email){
-  setTimeout(()=>window.location.href='index.html',300);
+  setTimeout(()=>window.location.href="index.html",300);
 }
 
 let userKey = null;
 
-async function getUserKey(){
-  const snap = await ref(db,'users');
-  const usersSnap = await new Promise(resolve => {
-    onValue(ref(db,'users'), snapshot => resolve(snapshot), {onlyOnce:true});
-  });
-  const users = usersSnap.val() || {};
-  for(const key in users){
-    if(users[key].email === email){
-      userKey = key;
-      break;
+/* FIND USER */
+async function loadUser(){
+  const snap = await get(ref(db,"users"));
+  const users = snap.val() || {};
+  for(const k in users){
+    if(users[k].email === email){
+      userKey = k;
+      loadMessages();
+      return;
     }
   }
+  alert("User not found");
+  window.location.href="index.html";
 }
 
-async function loadMessages(){
-  await getUserKey();
-  if(!userKey) return alert('User not found');
+/* LOAD MESSAGES (LIVE) */
+function loadMessages(){
+  const list = document.getElementById("list");
+  onValue(ref(db,`messages/${userKey}`), snap=>{
+    list.innerHTML="";
+    const msgs = snap.val();
+    if(!msgs) return;
 
-  const messagesRef = ref(db,'messages/'+userKey);
-  const messagesList = document.getElementById('messagesList');
+    const entries = Object.entries(msgs)
+      .sort((a,b)=>b[1].timestamp - a[1].timestamp);
 
-  onValue(messagesRef, snap=>{
-    messagesList.innerHTML = '';
-    const msgs = snap.val() || {};
-    // Sort latest first
-    const arr = Object.entries(msgs).sort((a,b)=>b[1].timestamp - a[1].timestamp);
-    arr.forEach(([id,msg])=>{
-      const div = document.createElement('div');
-      div.className = 'message '+(msg.read?'read':'unread');
+    entries.forEach(([id,msg])=>{
+      const div = document.createElement("div");
+      div.className = "message " + (msg.read ? "read":"unread");
+
       div.innerHTML = `
-        <span>${msg.subject || 'Message'} (${new Date(msg.timestamp).toLocaleString()})</span>
-        <span class="delete">🚮</span>
-        <div class="message-content">${msg.content || ''}</div>
+        <div>${msg.title || "Message"}</div>
+        <div class="msg-time">${new Date(msg.timestamp).toLocaleString()}</div>
+        <div class="delete">🚮</div>
+        <div class="msg-body">${msg.body}</div>
       `;
-      messagesList.appendChild(div);
 
-      const contentDiv = div.querySelector('.message-content');
-
-      // Toggle read / expand
-      div.addEventListener('click', e=>{
-        if(e.target.classList.contains('delete')) return;
-        contentDiv.style.display = contentDiv.style.display==='none'?'block':'none';
+      /* READ / EXPAND */
+      div.addEventListener("click", async ()=>{
+        const body = div.querySelector(".msg-body");
+        body.style.display = body.style.display==="block"?"none":"block";
         if(!msg.read){
-          update(ref(db,'messages/'+userKey+'/'+id), { read:true });
+          await update(ref(db,`messages/${userKey}/${id}`),{ read:true });
         }
       });
 
-      // Delete
-      div.querySelector('.delete').addEventListener('click', async e=>{
+      /* DELETE */
+      div.querySelector(".delete").addEventListener("click", async (e)=>{
         e.stopPropagation();
-        if(confirm('Delete this message?')){
-          await remove(ref(db,'messages/'+userKey+'/'+id));
-        }
+        await remove(ref(db,`messages/${userKey}/${id}`));
       });
-    });
 
-    if(arr.length===0) messagesList.innerHTML='No messages.';
+      list.appendChild(div);
+    });
   });
 }
 
-loadMessages();
+function goBack(){
+  window.location.href="main-menu.html";
+}
+
+loadUser();
 </script>
 
 </body>
