@@ -160,8 +160,15 @@ document.querySelectorAll('.amount').forEach(btn => {
     const amount = Number(btn.dataset.amount);
     if(!userKey) return show("User not loaded");
 
-    // Redirect with merchant_reference for backend
-    const payfastUrl = `https://payf.st/${amount === 5 ? 'pviof' : amount === 10 ? '7d4zb' : amount === 15 ? '7yw30' : '2564l'}?merchant_reference=${userKey}&custom_str1=${encodeURIComponent(email)}`;
+    let link = "";
+    if(amount === 5)  link = "be1ok";
+    if(amount === 10) link = "qak71";
+    if(amount === 15) link = "3k8lc";
+    if(amount === 20) link = "of02m";
+
+    const payfastUrl =
+      `https://payf.st/${link}?merchant_reference=${userKey}&custom_str1=${encodeURIComponent(email)}`;
+
     window.location.href = payfastUrl;
   });
 });
