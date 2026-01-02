@@ -31,6 +31,20 @@ body {
 #logout { position:absolute; top:10px; left:10px; cursor:pointer; font-size:24px; color:white; }
 #profile { position:absolute; top:10px; right:10px; cursor:pointer; font-size:24px; color:white; }
 #messages { position:absolute; top:10px; right:50px; cursor:pointer; font-size:24px; color:white; }
+
+#medals {
+  position:absolute;
+  bottom:130px; left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:20px;
+  font-size:18px;
+  color:white;
+}
+.medal {
+  display:flex; flex-direction:column; align-items:center;
+}
+.medal span { font-weight:bold; margin-top:5px; }
 </style>
 </head>
 <body>
@@ -48,9 +62,15 @@ body {
   <div class="tab" id="walletTab">WALLET</div>
 </div>
 
+<div id="medals">
+  <div class="medal">🥇<span id="goldName">-</span> R<span id="goldAmount">0</span></div>
+  <div class="medal">🥈<span id="silverName">-</span> R<span id="silverAmount">0</span></div>
+  <div class="medal">🥉<span id="bronzeName">-</span> R<span id="bronzeAmount">0</span></div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, get, child } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -82,36 +102,116 @@ document.getElementById('messages').addEventListener('click', () => {
   window.location.href = 'messages.html';
 });
 
-// Tabs navigation
+// PRIZES tab
 document.getElementById('prizesTab').addEventListener('click', () => { window.location.href='prizes.html'; });
+
+// SCORES tab
 document.getElementById('scoresTab').addEventListener('click', () => { window.location.href='scores.html'; });
+
+// WALLET tab
+document.getElementById('walletTab').addEventListener('click', () => { window.location.href='wallet.html'; });
+
+// PLAY tab logic with live prize & leaderboard check
 document.getElementById('playTab').addEventListener('click', async () => {
   try {
-    const snapshot = await get(child(ref(db), 'currentPrize'));
-    if(snapshot.exists()) {
+    const snapshot = await get(ref(db,'admin/prizes'));
+    if(!snapshot.exists()){
+      alert('PRIZE NOT SET YET');
+      return;
+    }
+    const data = snapshot.val();
+    const now = new Date();
+    const day = now.getDay()===0?6:now.getDay()-1; // Sunday=6
+    const nowMinutes = now.getHours()*60 + now.getMinutes();
+
+    let currentPrizeValue = 0;
+    if(data.schedule && data.schedule[day]){
+      for(const game of data.schedule[day]){
+        const [fromH, fromM] = game.from.split(':').map(Number);
+        const [toH, toM] = game.to.split(':').map(Number);
+        let fromMinutes = fromH*60 + fromM;
+        let toMinutes = toH*60 + toM + (toH<fromH?1440:0); // overnight
+        if(nowMinutes >= fromMinutes && nowMinutes <= toMinutes && game.value > 0){
+          currentPrizeValue = game.value;
+          break;
+        }
+      }
+    }
+
+    if(currentPrizeValue > 0){
+      // Prize exists, allow play
       window.location.href='game.html';
     } else {
       alert('PRIZE NOT SET YET');
     }
-  } catch(err) {
+
+  } catch(err){
     alert(err.message);
   }
 });
-document.getElementById('walletTab').addEventListener('click', () => { window.location.href='wallet.html'; });
 
-// Change login button color dynamically if signup exists
-async function checkSignup() {
-  try {
-    const snapshot = await get(child(ref(db), 'users'));
-    if(snapshot.exists()) {
-      // Found at least one user → set login tab color to yellow
-      document.getElementById('playTab').style.backgroundColor='yellow';
+// Live medals display from leaderboard
+async function updateMedals(){
+  try{
+    const prizeSnap = await get(ref(db,'admin/prizes'));
+    const leaderboardSnap = await get(ref(db,'leaderboard/current'));
+
+    if(!prizeSnap.exists() || !leaderboardSnap.exists()) return;
+
+    const data = prizeSnap.val();
+    const leaderboard = leaderboardSnap.val();
+
+    const now = new Date();
+    const day = now.getDay()===0?6:now.getDay()-1;
+    const nowMinutes = now.getHours()*60 + now.getMinutes();
+
+    let currentPrizeValue = 0;
+    if(data.schedule && data.schedule[day]){
+      for(const game of data.schedule[day]){
+        const [fromH, fromM] = game.from.split(':').map(Number);
+        const [toH, toM] = game.to.split(':').map(Number);
+        let fromMinutes = fromH*60 + fromM;
+        let toMinutes = toH*60 + toM + (toH<fromH?1440:0);
+        if(nowMinutes >= fromMinutes && nowMinutes <= toMinutes && game.value > 0){
+          currentPrizeValue = game.value;
+          break;
+        }
+      }
     }
-  } catch(err) {
+
+    // Sort top 3
+    const players = [];
+    for(const uid in leaderboard){
+      players.push({uid, score: leaderboard[uid].score});
+    }
+    players.sort((a,b)=>b.score - a.score);
+    const top3 = players.slice(0,3);
+
+    const gold = top3[0] || {};
+    const silver = top3[1] || {};
+    const bronze = top3[2] || {};
+
+    const goldName = gold.uid; const silverName = silver.uid; const bronzeName = bronze.uid;
+    const goldAmount = Math.round(currentPrizeValue*0.65);
+    const silverAmount = Math.round(currentPrizeValue*0.25);
+    const bronzeAmount = Math.round(currentPrizeValue*0.10);
+
+    document.getElementById('goldName').innerText = goldName || '-';
+    document.getElementById('silverName').innerText = silverName || '-';
+    document.getElementById('bronzeName').innerText = bronzeName || '-';
+
+    document.getElementById('goldAmount').innerText = goldAmount;
+    document.getElementById('silverAmount').innerText = silverAmount;
+    document.getElementById('bronzeAmount').innerText = bronzeAmount;
+
+  } catch(err){
     console.log(err);
   }
 }
-checkSignup();
+
+// Initial and live refresh every 5 sec
+updateMedals();
+setInterval(updateMedals,5000);
 
 </script>
 </body>
