@@ -86,41 +86,31 @@ document.getElementById('messages').addEventListener('click', () => {
 document.getElementById('prizesTab').addEventListener('click', () => { window.location.href='prizes.html'; });
 document.getElementById('scoresTab').addEventListener('click', () => { window.location.href='scores.html'; });
 
-// PLAY tab: allow entry based on scheduled game time only
-document.getElementById('playTab').addEventListener('click', async () => {
-  try {
-    const snapshot = await get(ref(db, 'admin/prizes/schedule'));
-    if(!snapshot.exists()){
-      alert('NO GAME SCHEDULE FOUND');
-      return;
-    }
-    const schedule = snapshot.val();
-    const now = new Date();
-    const day = now.getDay()===0?6:now.getDay()-1; // Sunday=6, Monday=0
-    const nowMinutes = now.getHours()*60 + now.getMinutes();
+// PLAY tab: allow entry based on game schedule & rest periods
+document.getElementById('playTab').addEventListener('click', () => {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  let nowMinutes = hours*60 + minutes;
 
-    let gameActive = false;
-    if(schedule[day]){
-      for(const game of schedule[day]){
-        const [fromH, fromM] = game.from.split(':').map(Number);
-        const [toH, toM] = game.to.split(':').map(Number);
-        let fromMinutes = fromH*60 + fromM;
-        let toMinutes = toH*60 + toM + (toH<fromH?1440:0); // handle overnight games
-        if(nowMinutes >= fromMinutes && nowMinutes <= toMinutes){
-          gameActive = true;
-          break;
-        }
-      }
-    }
+  let gameActive = false;
 
-    if(gameActive){
-      window.location.href='game.html';
-    } else {
-      alert('GAME NOT RUNNING NOW');
-    }
+  // Two game periods in minutes
+  // 06:00-17:30
+  const period1 = { start: 6*60, end: 17*60+30 }; 
+  // 18:00-05:30 next day
+  const period2 = { start: 18*60, end: 29*60+30 }; // 29*60+30 = 1740
 
-  } catch(err) {
-    alert(err.message);
+  // Adjust for after midnight
+  if(nowMinutes < 6) nowMinutes += 1440;
+
+  if(nowMinutes >= period1.start && nowMinutes <= period1.end) gameActive = true;
+  else if(nowMinutes >= period2.start && nowMinutes <= period2.end) gameActive = true;
+
+  if(gameActive){
+    window.location.href='game.html';
+  } else {
+    alert('GAME NOT RUNNING NOW (rest period)');
   }
 });
 
