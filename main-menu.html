@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -81,41 +82,41 @@ document.getElementById('messages').addEventListener('click', () => {
   window.location.href = 'messages.html';
 });
 
-// Tabs navigation
+// PRIZES & SCORES tabs
 document.getElementById('prizesTab').addEventListener('click', () => { window.location.href='prizes.html'; });
 document.getElementById('scoresTab').addEventListener('click', () => { window.location.href='scores.html'; });
 
-// Fixed PLAY tab logic
+// PLAY tab: allow entry based on scheduled game time only
 document.getElementById('playTab').addEventListener('click', async () => {
   try {
-    const snapshot = await get(ref(db, 'admin/prizes'));
+    const snapshot = await get(ref(db, 'admin/prizes/schedule'));
     if(!snapshot.exists()){
-      alert('PRIZE NOT SET YET');
+      alert('NO GAME SCHEDULE FOUND');
       return;
     }
-    const data = snapshot.val();
+    const schedule = snapshot.val();
     const now = new Date();
-    const day = now.getDay()===0?6:now.getDay()-1; // Sunday=6
+    const day = now.getDay()===0?6:now.getDay()-1; // Sunday=6, Monday=0
     const nowMinutes = now.getHours()*60 + now.getMinutes();
 
-    let canPlay = false;
-    if(data.schedule && data.schedule[day]){
-      for(const game of data.schedule[day]){
+    let gameActive = false;
+    if(schedule[day]){
+      for(const game of schedule[day]){
         const [fromH, fromM] = game.from.split(':').map(Number);
         const [toH, toM] = game.to.split(':').map(Number);
         let fromMinutes = fromH*60 + fromM;
-        let toMinutes = toH*60 + toM + (toH<fromH?1440:0); // handle overnight
-        if(nowMinutes >= fromMinutes && nowMinutes <= toMinutes && game.value > 0){
-          canPlay = true;
+        let toMinutes = toH*60 + toM + (toH<fromH?1440:0); // handle overnight games
+        if(nowMinutes >= fromMinutes && nowMinutes <= toMinutes){
+          gameActive = true;
           break;
         }
       }
     }
 
-    if(canPlay){
+    if(gameActive){
       window.location.href='game.html';
     } else {
-      alert('PRIZE NOT SET YET');
+      alert('GAME NOT RUNNING NOW');
     }
 
   } catch(err) {
@@ -123,20 +124,8 @@ document.getElementById('playTab').addEventListener('click', async () => {
   }
 });
 
+// WALLET tab
 document.getElementById('walletTab').addEventListener('click', () => { window.location.href='wallet.html'; });
-
-// Change PLAY tab color dynamically if signup exists
-async function checkSignup() {
-  try {
-    const snapshot = await get(ref(db, 'users'));
-    if(snapshot.exists()) {
-      document.getElementById('playTab').style.backgroundColor='yellow';
-    }
-  } catch(err) {
-    console.log(err);
-  }
-}
-checkSignup();
 
 </script>
 </body>
