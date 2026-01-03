@@ -74,37 +74,6 @@ document.getElementById('messages').addEventListener('click', () => { window.loc
 document.getElementById('prizesTab').addEventListener('click', () => { window.location.href='prizes.html'; });
 document.getElementById('scoresTab').addEventListener('click', () => { window.location.href='scores.html'; });
 document.getElementById('walletTab').addEventListener('click', () => { window.location.href='wallet.html'; });
-// ---------------------- LOAD USER LIVES ----------------------
-import { ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-async function loadLives() {
-  try {
-    const email = localStorage.getItem('currentUserEmail'); // make sure you store this on login
-    if (!email) return;
-
-    const key = email.replace(/\./g, ','); // Firebase key safe
-    const livesRef = ref(db, 'users/' + key + '/lives');
-    const snapshot = await get(livesRef);
-
-    let lives = 0;
-    if (snapshot.exists()) lives = snapshot.val();
-
-    // Store lives so game.html can access
-    localStorage.setItem('currentUserLives', lives);
-    console.log('User lives loaded:', lives);
-  } catch (err) {
-    console.error('Error loading lives:', err);
-  }
-}
-
-// Call it immediately
-loadLives();
-// ---------------------- LOAD USER LIVES ----------------------
-async function loadLives() { ... }
-loadLives();
-
-// ---------------------- PLAY BUTTON SCHEDULE ----------------------
-document.getElementById('playTab').addEventListener('click', () => { ... });
 
 // ---------------------- PLAY BUTTON SCHEDULE ----------------------
 document.getElementById('playTab').addEventListener('click', () => {
