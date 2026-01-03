@@ -50,7 +50,7 @@ body {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -67,26 +67,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Logout
-document.getElementById('logout').addEventListener('click', () => {
-  window.location.href = 'index.html';
-});
-
-// Profile
-document.getElementById('profile').addEventListener('click', () => {
-  window.location.href = 'profile.html';
-});
-
-// Messages
-document.getElementById('messages').addEventListener('click', () => {
-  window.location.href = 'messages.html';
-});
-
-// PRIZES & SCORES tabs
+// ---------------------- NAVIGATION ----------------------
+document.getElementById('logout').addEventListener('click', () => { window.location.href = 'index.html'; });
+document.getElementById('profile').addEventListener('click', () => { window.location.href = 'profile.html'; });
+document.getElementById('messages').addEventListener('click', () => { window.location.href = 'messages.html'; });
 document.getElementById('prizesTab').addEventListener('click', () => { window.location.href='prizes.html'; });
 document.getElementById('scoresTab').addEventListener('click', () => { window.location.href='scores.html'; });
+document.getElementById('walletTab').addEventListener('click', () => { window.location.href='wallet.html'; });
 
-// PLAY tab: allow entry based on game schedule & rest periods
+// ---------------------- PLAY BUTTON SCHEDULE ----------------------
 document.getElementById('playTab').addEventListener('click', () => {
   const now = new Date();
   let nowMinutes = now.getHours() * 60 + now.getMinutes(); // minutes since midnight
@@ -118,14 +107,7 @@ document.getElementById('playTab').addEventListener('click', () => {
 
   // Otherwise, game is active
   window.location.href = 'game.html';
-}); {
-    alert('GAME NOT RUNNING NOW (rest period)');
-  }
 });
-
-// WALLET tab
-document.getElementById('walletTab').addEventListener('click', () => { window.location.href='wallet.html'; });
-
 </script>
 </body>
 </html>
