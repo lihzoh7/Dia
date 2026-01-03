@@ -89,27 +89,36 @@ document.getElementById('scoresTab').addEventListener('click', () => { window.lo
 // PLAY tab: allow entry based on game schedule & rest periods
 document.getElementById('playTab').addEventListener('click', () => {
   const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  let nowMinutes = hours*60 + minutes;
+  let nowMinutes = now.getHours() * 60 + now.getMinutes(); // minutes since midnight
 
-  let gameActive = false;
+  // Define rest periods in minutes since midnight
+  const restPeriods = [
+    { start: 17*60 + 30, end: 18*60 },  // 17:30 - 18:00
+    { start: 5*60 + 30, end: 6*60 }     // 5:30 - 6:00
+  ];
 
-  // Two game periods in minutes
-  // 06:00-17:30
-  const period1 = { start: 6*60, end: 17*60+30 }; 
-  // 18:00-05:30 next day
-  const period2 = { start: 18*60, end: 29*60+30 }; // 29*60+30 = 1740
+  // Check if we are in a rest period
+  const inRest = restPeriods.some(period => {
+    let start = period.start;
+    let end = period.end;
 
-  // Adjust for after midnight
-  if(nowMinutes < 6) nowMinutes += 1440;
+    // Handle rest period that wraps past midnight
+    if (end < start) {
+      if (nowMinutes >= start || nowMinutes < end) return true;
+    } else {
+      if (nowMinutes >= start && nowMinutes < end) return true;
+    }
+    return false;
+  });
 
-  if(nowMinutes >= period1.start && nowMinutes <= period1.end) gameActive = true;
-  else if(nowMinutes >= period2.start && nowMinutes <= period2.end) gameActive = true;
+  if (inRest) {
+    alert('GAME NOT RUNNING NOW (rest period)');
+    return;
+  }
 
-  if(gameActive){
-    window.location.href='game.html';
-  } else {
+  // Otherwise, game is active
+  window.location.href = 'game.html';
+}); {
     alert('GAME NOT RUNNING NOW (rest period)');
   }
 });
