@@ -161,15 +161,16 @@ document.querySelectorAll('.amount').forEach(btn => {
     if(!userKey) return show("User not loaded");
 
     let link = "";
-    if(amount === 5)  link = "be1ok";
-    if(amount === 10) link = "qak71";
-    if(amount === 15) link = "3k8lc";
-    if(amount === 20) link = "of02m";
+if(amount === 5)  link = "sbyhn";
+if(amount === 10) link = "0hinu";
+if(amount === 15) link = "1txpl";
+if(amount === 20) link = "23hbz";
 
-    const payfastUrl =
-      `https://payf.st/${link}?merchant_reference=${userKey}&custom_str1=${encodeURIComponent(email)}`;
+const payfastUrl =
+  `https://payf.st/${link}?merchant_reference=${userKey}&custom_str1=${encodeURIComponent(email)}`;
 
-    window.location.href = payfastUrl;
+window.location.href = payfastUrl;
+
   });
 });
 
