@@ -154,23 +154,16 @@ function updateUI(){
 
 loadWallet();
 
-/* PAYFAST REDIRECT */
+/* DEMO TOP-UP (NO PAYFAST) */
 document.querySelectorAll('.amount').forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
     const amount = Number(btn.dataset.amount);
     if(!userKey) return show("User not loaded");
 
-    let link = "";
-if(amount === 5)  link = "18pm5";
-if(amount === 10) link = "dlwk9";
-if(amount === 15) link = "or9gp";
-if(amount === 20) link = "jg1my";
+    balance += amount;
 
-const payfastUrl =
-  `https://payf.st/${link}?merchant_reference=${userKey}&custom_str1=${encodeURIComponent(email)}`;
-
-window.location.href = payfastUrl;
-
+    await update(ref(db, `users/${userKey}/wallet`), { balance, lives });
+    show(`DEMO TOP-UP: +R${amount.toFixed(2)}`);
   });
 });
 
